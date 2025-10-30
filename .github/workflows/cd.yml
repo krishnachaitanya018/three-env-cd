@@ -2,8 +2,8 @@ name: Simple 3-Env CD
 
 on:
   push:
-    branches: [ main ]
-  workflow_dispatch:
+    branches: [ main ]         
+  workflow_dispatch:           
 
 permissions:
   contents: read
@@ -12,6 +12,7 @@ jobs:
   build:
     name: Build once
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -33,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     environment:
-      name: dev
+      name: dev                   
     steps:
       - uses: actions/checkout@v4         
       - uses: actions/download-artifact@v4
@@ -45,14 +46,20 @@ jobs:
         run: cat artifact/index.txt
 
       - name: Deploy to dev
-        run: ./scripts/deploy.sh dev artifact/index.txt
+        env:                       
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_SERVER: ${{ secrets.DB_SERVER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: |
+          echo "Connecting to DB: $DB_SERVER with user: $DB_USER"
+          ./scripts/deploy.sh dev artifact/index.txt
 
   deploy_uat:
     name: Deploy to UAT (requires approval)
     runs-on: ubuntu-latest
     needs: deploy_dev
     environment:
-      name: uat
+      name: uat                   
     steps:
       - uses: actions/checkout@v4          
       - uses: actions/download-artifact@v4
@@ -61,14 +68,21 @@ jobs:
           path: artifact
 
       - name: Deploy to uat
-        run: ./scripts/deploy.sh uat artifact/index.txt
+        env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_SERVER: ${{ secrets.DB_SERVER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: |
+          echo "Connecting to DB: $DB_SERVER with user: $DB_USER"
+          ./scripts/deploy.sh uat artifact/index.txt
 
   deploy_prod:
     name: Deploy to Prod (requires approval)
     runs-on: ubuntu-latest
     needs: deploy_uat
     environment:
-      name: prod
+      name: prod                 
+
     steps:
       - uses: actions/checkout@v4          
       - uses: actions/download-artifact@v4
@@ -77,4 +91,10 @@ jobs:
           path: artifact
 
       - name: Deploy to prod
-        run: ./scripts/deploy.sh prod artifact/index.txt
+        env:
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_SERVER: ${{ secrets.DB_SERVER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+        run: |
+          echo "Connecting to DB: $DB_SERVER with user: $DB_USER"
+          ./scripts/deploy.sh prod artifact/index.txt
