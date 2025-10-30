@@ -35,7 +35,7 @@ jobs:
     environment:
       name: dev
     steps:
-      - uses: actions/checkout@v4          # ✅ <--- add this line
+      - uses: actions/checkout@v4         
       - uses: actions/download-artifact@v4
         with:
           name: app-build
@@ -54,7 +54,7 @@ jobs:
     environment:
       name: uat
     steps:
-      - uses: actions/checkout@v4          # ✅ <--- add this line
+      - uses: actions/checkout@v4          
       - uses: actions/download-artifact@v4
         with:
           name: app-build
@@ -70,7 +70,7 @@ jobs:
     environment:
       name: prod
     steps:
-      - uses: actions/checkout@v4          # ✅ <--- add this line
+      - uses: actions/checkout@v4          
       - uses: actions/download-artifact@v4
         with:
           name: app-build
