@@ -1,0 +1,78 @@
+name: Simple 3-Env CD
+
+on:
+  push:
+    branches: [ main ]    # auto CD on push to main
+  workflow_dispatch:       # allow manual run too
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build once
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Simulate a build by copying app content into an artifact folder
+      - name: Prepare artifact
+        run: |
+          mkdir -p artifact
+          cp app/index.txt artifact/index.txt
+          echo "Build time: $(date)" >> artifact/index.txt
+          cat artifact/index.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-build
+          path: artifact/
+
+  deploy_dev:
+    name: Deploy to Dev (no approvals)
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: dev                        # <- No approvals configured
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-build
+          path: artifact
+
+      - name: Show artifact
+        run: cat artifact/index.txt
+
+      - name: Deploy to dev
+        run: ./scripts/deploy.sh dev artifact/index.txt
+
+  deploy_uat:
+    name: Deploy to UAT (requires approval)
+    runs-on: ubuntu-latest
+    needs: deploy_dev
+    environment:
+      name: uat                        # <- Has required reviewers in Settings
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-build
+          path: artifact
+
+      - name: Deploy to uat
+        run: ./scripts/deploy.sh uat artifact/index.txt
+
+  deploy_prod:
+    name: Deploy to Prod (requires approval)
+    runs-on: ubuntu-latest
+    needs: deploy_uat
+    environment:
+      name: prod                       # <- Has required reviewers in Settings
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: app-build
+          path: artifact
+
+      - name: Deploy to prod
+        run: ./scripts/deploy.sh prod artifact/index.txt
